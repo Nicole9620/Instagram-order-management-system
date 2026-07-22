@@ -16,13 +16,12 @@ const statusColors: Record<string, string> = {
 
 const paymentColors: Record<string, string> = {
   unpaid: 'bg-red-100 text-red-600',
-  partial: 'bg-yellow-100 text-yellow-600',
   paid: 'bg-green-100 text-green-600',
 }
 
 // Statuses the seller can set after an order is confirmed.
 const advanceStatuses = ['confirmed', 'packed', 'shipped', 'delivered']
-const paymentStatuses = ['unpaid', 'partial', 'paid']
+const paymentStatuses = ['unpaid', 'paid']
 
 // These stages can't start until the payment is verified.
 const requiresPayment = ['packed', 'shipped', 'delivered']
@@ -31,6 +30,7 @@ export default function OrderCard({ order, onUpdated }: { order: Order; onUpdate
   const [updating, setUpdating] = useState(false)
   const [priceInput, setPriceInput] = useState('')
   const [showProof, setShowProof] = useState(false)
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false)
 
   async function update(fields: Partial<Order>) {
     setUpdating(true)
@@ -61,11 +61,23 @@ export default function OrderCard({ order, onUpdated }: { order: Order; onUpdate
       <div className="flex justify-between items-start">
         <div>
           <p className="font-bold text-gray-800">{order.customer_name}</p>
-          <p className="text-sm text-gray-500">{order.item_name} {order.variant ? `— ${order.variant}` : ''}</p>
+          <p className="text-sm text-gray-500"><span className="text-gray-400">Item:</span> {order.item_name}</p>
+          {order.variant && (
+            <p className="text-sm text-gray-500"><span className="text-gray-400">Quantity:</span> {order.variant}</p>
+          )}
         </div>
-        <p className="font-bold text-gray-800">
-          {order.price != null ? `₹${order.price}` : <span className="text-sm font-normal text-gray-400">no price</span>}
-        </p>
+        <div className="flex items-start gap-2">
+          <p className="font-bold text-gray-800">
+            {order.price != null ? `₹${order.price}` : <span className="text-sm font-normal text-gray-400">no price</span>}
+          </p>
+          <button
+            onClick={() => setShowCloseConfirm(true)}
+            title="Close order"
+            className="text-gray-300 hover:text-red-500 text-lg leading-none transition"
+          >
+            ✕
+          </button>
+        </div>
       </div>
 
       {order.address && <p className="text-xs text-gray-400">📍 {order.address}</p>}
@@ -194,6 +206,35 @@ export default function OrderCard({ order, onUpdated }: { order: Order; onUpdate
       <p className="text-[11px] text-gray-400 border-t pt-2 mt-1">
         Placed {formatDateTime(order.created_at)} · Updated {formatDateTime(order.updated_at)}
       </p>
+
+      {showCloseConfirm && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+            <h2 className="text-lg font-bold text-gray-800 mb-1">Close order?</h2>
+            <p className="text-sm text-gray-500 mb-5">
+              If you close this order, it means the order is complete/cancelled and it will no longer show on the board.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setShowCloseConfirm(false)}
+                className="text-sm font-semibold text-gray-500 hover:text-gray-700 px-4 py-2"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  await update({ closed: true })
+                  setShowCloseConfirm(false)
+                }}
+                disabled={updating}
+                className="bg-red-500 hover:bg-red-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition disabled:opacity-50"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
