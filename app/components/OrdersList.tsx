@@ -19,7 +19,7 @@ export default function OrdersList() {
         .select('*')
         .order('created_at', { ascending: false })
       if (error) setError(error.message)
-      else if (data) setOrders(data)
+      else if (data) setOrders(data.filter((o) => !o.closed))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not reach the server')
     }
