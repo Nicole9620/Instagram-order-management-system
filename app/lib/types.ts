@@ -11,6 +11,7 @@ export type Order = {
   order_status: string
   created_at: string
   updated_at: string | null
+  closed: boolean | null
 }
 
 // The order a request moves through, in sequence.
